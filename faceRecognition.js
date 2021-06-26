@@ -7,54 +7,27 @@ const faceapi = require('@vladmandic/face-api');
 
 const router = express.Router();
 
-//"https://api.tinify.com/output/fqrda3484ym3b7ghwc2neujnzmt6a8gy","https://api.tinify.com/output/f2j6y3cgk009dewfp55713xgta4cbnuv","https://api.tinify.com/output/ekdntqh6zfwt4uy39rjvmy4564jtnd8w"
-// const REFERENCE_IMAGE =
-//   "https://raw.githubusercontent.com/WebDevSimplified/Face-Recognition-JavaScript/master/labeled_images/Thor/2.jpg";
-
-// let arrayOfObj = [
-//   {
-//     img:
-//       "https://raw.githubusercontent.com/WebDevSimplified/Face-Recognition-JavaScript/master/labeled_images/Hawkeye/1.jpg",
-//     verified: false,
-//     adult: false,
-//   },
-//   {
-//     img:
-//       "https://raw.githubusercontent.com/WebDevSimplified/Face-Recognition-JavaScript/master/labeled_images/Thor/2.jpg",
-//     verified: false,
-//     adult: false,
-//   },
-//   {
-//     img:
-//       "https://raw.githubusercontent.com/WebDevSimplified/Face-Recognition-JavaScript/master/labeled_images/Hawkeye/1.jpg",
-//     verified: false,
-//     adult: false,
-//   },
-// ];
-
-
-async function run(avatar, REFERENCE_IMAGE) {
-  console.log('in function run')
+async function run(avatar, REFERENCE_IMAGE, profileId) {
+  console.log('in function run', avatar, REFERENCE_IMAGE)
   await faceDetectionNet.loadFromDisk("./models");
   await faceapi.nets.faceLandmark68Net.loadFromDisk("./models");
   await faceapi.nets.faceRecognitionNet.loadFromDisk("./models");
 
-  // for (let i = 0; i < arrayOfObj.length; i++) {
     let QUERY_IMAGE = avatar;
-    const referenceImage = await canvas.loadImage(REFERENCE_IMAGE);
+    const referenceImage = await canvas.loadImage(REFERENCE_IMAGE); 
     const queryImage = await canvas.loadImage(QUERY_IMAGE);
-
+   console.log({queryImage, referenceImage})
     // detect faces
     const resultsRef = await faceapi
       .detectAllFaces(referenceImage, faceDetectionOptions)
       .withFaceLandmarks()
       .withFaceDescriptors();
-
+    console.log({resultsRef})
     const resultsQuery = await faceapi
       .detectAllFaces(queryImage, faceDetectionOptions)
       .withFaceLandmarks()
       .withFaceDescriptors();
-
+    console.log({resultsQuery})
     const faceMatcher = new faceapi.FaceMatcher(resultsRef, 0.55);
     console.log({faceMatcher})
 
@@ -64,20 +37,23 @@ async function run(avatar, REFERENCE_IMAGE) {
       const bestMatch = faceMatcher.findBestMatch(res.descriptor);
       if (bestMatch._label === "person 1") {
         console.log('its a match')
-        //arrayOfObj[i]["verified"] = true;
       } else {
         console.log('no match')
       }
     });
-  // }
   return ;
 }
-run("https://raw.githubusercontent.com/WebDevSimplified/Face-Recognition-JavaScript/master/labeled_images/Thor/2.jpg", "https://raw.githubusercontent.com/WebDevSimplified/Face-Recognition-JavaScript/master/labeled_images/Hawkeye/1.jpg")
+//run("https://raw.githubusercontent.com/WebDevSimplified/Face-Recognition-JavaScript/master/labeled_images/Thor/2.jpg", "https://raw.githubusercontent.com/WebDevSimplified/Face-Recognition-JavaScript/master/labeled_images/Hawkeye/1.jpg")
 router.post("/face", async (req, res) => {
-  const images = req.body;
-  const REFERENCE_IMAGE = images[0]["img"];
+  
+  const obj = req.body;
+  console.log(obj)
+  const REFERENCE_IMAGE = obj.objImages.selfieUrl;
+  const avatar = obj.objImages.avatar
+  const profileId = obj.profileId
+  console.log({avatar, REFERENCE_IMAGE, profileId})
   try {
-    const newArray = await run(images, REFERENCE_IMAGE);
+    const newArray = await run(avatar, REFERENCE_IMAGE, profileId);
     if (newArray) {
       res.status(200).json(newArray);
     }
