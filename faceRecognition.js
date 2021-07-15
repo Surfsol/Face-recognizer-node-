@@ -14,6 +14,7 @@ async function run(images, REFERENCE_IMAGE) {
   await faceapi.nets.faceRecognitionNet.loadFromDisk('./models');
   console.log('modals loaded');
   let count = 0;
+  let success = []
   for (let i = 0; i < images.length; i++) {
     if (images[i].includes('image')) {
       let QUERY_IMAGE = images[i];
@@ -47,14 +48,16 @@ async function run(images, REFERENCE_IMAGE) {
             console.log('detected avatar face', bestMatch)
             if (bestMatch._label === 'person 1') {
               count += 1;
+              success.push(images[i])
             }
           });
         }
       }
     }
   }
-  console.log('count',count)
-  return count;
+  console.log('count',count, success)
+  let result = {count, success}
+  return result;
 }
 
 router.post('/face', async (req, res) => {
@@ -64,10 +67,9 @@ router.post('/face', async (req, res) => {
   const profileId = obj.profileId;
   console.log('body info');
   try {
-    const count = await run(images, REFERENCE_IMAGE, profileId);
-
+    const resultObj = await run(images, REFERENCE_IMAGE, profileId);
     if (res.status(200)) {
-      res.status(200).json(count);
+      res.status(200).json(resultObj);
     }
   } catch (err) {
     res.status(500).json(err);
